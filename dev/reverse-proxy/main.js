@@ -10,12 +10,15 @@ const { setTimeout } = require('timers/promises')
 
 const MAIN_PORT = Number.parseInt(process.env.MAIN_PORT)
 const FRONTEND_PORT = Number.parseInt(process.env.FRONTEND_PORT)
+const AUTH_PORT = Number.parseInt(process.env.AUTH_PORT)
 
 assert(MAIN_PORT > 0)
 assert(FRONTEND_PORT > 0)
+assert(AUTH_PORT > 0)
 
 const WAIT_FOR = [
-    `http://localhost:${FRONTEND_PORT}`
+    { name: 'Frontend', url: `http://localhost:${FRONTEND_PORT}` },
+    { name: 'Auth service', url: `http://localhost:${AUTH_PORT}/auth/` },
 ]
 
 const server = express()
@@ -24,23 +27,28 @@ const proxy = httpProxy.createProxyServer({})
 proxy.on('error', (err, req, res) => {
     console.error(err)
     res.writeHead(500, { 'Content-Type': 'text/plain' })
-    res.end('Something is broken, maybe try again in a few secoonds.')
+    res.end(err.toString())
 })
 
 server.use(morgan('tiny'))
 
 server.use((req, res) => {
-    const target = `${req.protocol}://${req.headers.host.split(':')[0]}:${FRONTEND_PORT}`
+    const targetPort = [
+        { regex: /^\/auth\//, port: AUTH_PORT },
+        { regex: /.*/, port: FRONTEND_PORT },
+    ].find(route => req.path.match(route.regex)).port
+    const target = `${req.protocol}://${req.headers.host.split(':')[0]}:${targetPort}`
     proxy.web(req, res, { target })
 })
 
 const main = async () => {
 
     await Promise.all(
-        WAIT_FOR.map(async host => {
+        WAIT_FOR.map(async endpoint => {
             while (true) {
                 try {
-                    await axios.get(host)
+                    await axios.get(endpoint.url)
+                    console.info(`${endpoint.name} is up`)
                     return
                 } catch (err) {
                     await setTimeout(100)

@@ -1,5 +1,9 @@
 .PHONY: dev
 
+out: node_modules
+	node_modules/.bin/next build
+	node_modules/.bin/next export
+
 dev: node_modules
 	node_modules/.bin/next dev -p $(FRONTEND_PORT)
 
