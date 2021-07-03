@@ -1,6 +1,6 @@
 import axios from "axios"
 import { GithubApiConfig } from "../../config"
-import { GithubUser } from "./types"
+import { GithubUser, GithubUserResponse } from "./types"
 
 export class GithubAuth {
 
@@ -38,7 +38,22 @@ export class GithubAuth {
         return {
             email: data.email,
             id: data.id,
-            token: token
+        }
+    }
+
+    public async getUserInfo(token: string): Promise<GithubUserResponse> {
+        const { data } = await axios.get(this.apiConfig.userUrl,
+            {
+                headers: {
+                    Accept: "application/vnd.github.v3+json",
+                    Authorization: `Bearer ${token}`
+                }
+            }
+        )
+        return {
+            email: data.email,
+            id: data.id,
+            info: data
         }
     }
 

@@ -1,6 +1,5 @@
 export type GithubUser = {
     id: number
-    token: string
     email: string
 }
 

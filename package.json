@@ -12,5 +12,6 @@
     "devDependencies": {
         "chalk": "^4.1.1",
         "concurrently": "^6.2.0"
-    }
+    },
+    "dependencies": {}
 }

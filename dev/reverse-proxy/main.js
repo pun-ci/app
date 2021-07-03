@@ -35,6 +35,7 @@ server.use(morgan('tiny'))
 server.use((req, res) => {
     const targetPort = [
         { regex: /^\/auth\//, port: AUTH_PORT },
+        { regex: /^\/api\/v1\/user\//, port: AUTH_PORT },
         { regex: /.*/, port: FRONTEND_PORT },
     ].find(route => req.path.match(route.regex)).port
     const target = `${req.protocol}://${req.headers.host.split(':')[0]}:${targetPort}`
