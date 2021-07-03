@@ -19,3 +19,7 @@
 ```
 
 Open http://localhost:5000
+
+### DB admin:
+
+http://localhost:2113/
