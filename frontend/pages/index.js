@@ -18,7 +18,7 @@ export default class Home extends React.Component {
     }
 
     login() {
-        return <a href={this.props.githubAuthUrl}>Login</a>
+        return <a href='/auth/github'>Login with GitHub</a>
     }
 
     content(user) {
@@ -27,8 +27,11 @@ export default class Home extends React.Component {
                 {user.info.login}
             </p>
             <p>
-                <img src={ user.info.avatar_url } width='40' height='40' />
+                <img src={user.info.avatar_url} width='40' height='40' />
             </p>
+            <form action='/auth/logout' method='POST'>
+                <input type='submit' value='Logout' />
+            </form>
         </>
     }
 
@@ -48,15 +51,5 @@ export default class Home extends React.Component {
 
             </>
         )
-    }
-}
-
-export async function getStaticProps() {
-    const GITHUB_AUTH_URL = process.env.GITHUB_AUTH_URL
-    assert(GITHUB_AUTH_URL.length && GITHUB_AUTH_URL.length > 1)
-    return {
-        props: {
-            githubAuthUrl: GITHUB_AUTH_URL
-        }
     }
 }

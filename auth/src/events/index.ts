@@ -1,4 +1,4 @@
-import { EventStoreDBClient, EventType, jsonEvent, JSONEventData, JSONEventType, ResolvedEvent } from '@eventstore/db-client'
+import { EventStoreDBClient, EventType, EventTypeToRecordedEvent, jsonEvent, JSONEventData, JSONEventType, ResolvedEvent } from '@eventstore/db-client'
 import { ReadStreamOptions } from '@eventstore/db-client/dist/streams'
 
 export interface EventStoreDb {
@@ -7,9 +7,11 @@ export interface EventStoreDb {
 
     getAllEvents<T extends EventType>(
         streamName: string
-    ): Promise<ResolvedEvent<T>[]>
+    ): Promise<EventTypeToRecordedEvent<T>[]>
 
 }
+
+class InvalidEvent extends Error { }
 
 class EventStore implements EventStoreDb {
 
@@ -23,9 +25,18 @@ class EventStore implements EventStoreDb {
 
     public async getAllEvents<T extends EventType>(
         streamName: string
-    ): Promise<ResolvedEvent<T>[]> {
+    ): Promise<EventTypeToRecordedEvent<T>[]> {
         try {
-            return await this.dbClient.readStream<T>(streamName)
+            const events = await this.dbClient.readStream<T>(streamName)
+            return events.map(e => {
+                if (e.event) {
+                    return e.event
+                }
+                if (e.link) {
+                    return e.link
+                }
+                throw new InvalidEvent()
+            })
         } catch (err) {
             if (err.type === 'stream-not-found') {
                 return []

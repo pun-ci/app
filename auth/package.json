@@ -22,6 +22,7 @@
         "cookie": "^0.4.1",
         "fastify": "^3.18.1",
         "fastify-cookie": "^5.3.1",
+        "fastify-formbody": "^5.0.0",
         "jsonwebtoken": "^8.5.1",
         "microtime": "^3.0.0",
         "uuid": "^8.3.2"

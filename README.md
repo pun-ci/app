@@ -12,7 +12,7 @@
 
 ```sh
 ; git clone git@github.com:pun-ci/app.git punci-app
-; cd punci app
+; cd punci-app
 ; make init_dev
 # Fill missing secret values in .env
 ; make dev

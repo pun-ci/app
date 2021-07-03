@@ -19,12 +19,9 @@ export class Users {
     public async getUserIdByGithubUserId(githubUserId: number): Promise<string> {
         const streamId = `user-gh:${githubUserId}`;
         const events = await this.eventstore.getAllEvents<UserCreated>(streamId)
-
+        console.log({events})
         if (events.length > 0) {
-            if (!events[0].event) {
-                throw Error('Wrong data')
-            }
-            return events[0].event.data.id
+            return events[0].data.id
         }
         const id = uuid()
         await this.eventstore.addEvent(streamId, jsonEvent<UserCreated>({

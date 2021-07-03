@@ -1,4 +1,4 @@
-import fastify, { FastifyRequest } from 'fastify'
+import fastify, { FastifyReply, FastifyRequest } from 'fastify'
 import { strict as assert } from 'assert'
 import axios, { AxiosResponse } from 'axios'
 import { GithubAuth } from '../github'
@@ -9,13 +9,16 @@ import { Session } from '../user/session'
 import { AuthenticationError, Tokens } from '../token'
 import { serialize } from 'cookie'
 import fastifyCookie from 'fastify-cookie'
+import fastifyFormBody from 'fastify-formbody'
 
+assert(process.env.GITHUB_AUTH_URL?.match(/.+/))
 assert(process.env.GITHUB_AUTH_CLIENT_ID?.match(/.+/))
 assert(process.env.GITHUB_CLIENT_SECRET?.match(/.+/))
 assert(process.env.EVENTSTOREDB_URL?.match(/.+/))
 assert(process.env.AUTH_PORT?.match(/\d+/))
 assert(process.env.JWT_SECRET?.match(/.+/))
 
+const GITHUB_AUTH_URL = String(process.env.GITHUB_AUTH_URL)
 const GITHUB_AUTH_CLIENT_ID = String(process.env.GITHUB_AUTH_CLIENT_ID)
 const GITHUB_CLIENT_SECRET = String(process.env.GITHUB_CLIENT_SECRET)
 const EVENTSTOREDB_URL = String(process.env.EVENTSTOREDB_URL)
@@ -38,12 +41,24 @@ const tokens = new Tokens(JWT_SECRET)
 const server = fastify({ logger: true })
 
 server.register(fastifyCookie)
+server.register(fastifyFormBody)
 
 server.get('/auth/', async () => {
     return {
         status: 'OK'
     }
 })
+
+const TOKEN_NAME = 'punci_token'
+
+const deleteCookie = (reply: FastifyReply) => {
+    reply.header('Set-Cookie', serialize(TOKEN_NAME, '', {
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+    }))
+}
 
 server.route({
     method: 'GET',
@@ -60,20 +75,38 @@ server.route({
             const { code } = request.query as { code: string }
             const githubToken = await githubAuth.getToken(code)
             const githubUser = await githubAuth.getUser(githubToken)
+            console.log({githubUser})
             const userId = await users.getUserIdByGithubUserId(githubUser.id)
+            console.log({userId})
             const sessionId = await sessions.createSessionId({ userId, githubToken })
             const token = tokens.createToken(sessionId)
-            reply.header('Set-Cookie', serialize('punci_token', token, {
-                path: '/',
-                httpOnly: true,
-                secure: true,
-                sameSite: 'strict',
-            }))
         } catch (err) {
             throw err
         } finally {
             reply.redirect('/')
         }
+    }
+})
+
+server.route({
+    method: 'GET',
+    url: '/auth/github',
+    handler: async (request, reply) => {
+        reply.redirect(GITHUB_AUTH_URL)
+    }
+})
+
+server.route({
+    method: 'POST',
+    url: '/auth/logout',
+    handler: async (request, reply) => {
+        const token = request.cookies.punci_token
+        if (token) {
+            const sessionId = tokens.getSessionIdFromToken(token)
+            sessions.delete(sessionId)
+        }
+        deleteCookie(reply)
+        reply.redirect('/')
     }
 })
 
@@ -93,13 +126,7 @@ server.route({
         } catch (err) {
             if (err.constructor.name === AuthenticationError.name) {
                 reply.status(401)
-                reply.header('Set-Cookie', serialize('punci_token', '', {
-                    path: '/',
-                    httpOnly: true,
-                    secure: true,
-                    sameSite: 'strict',
-                    expires: new Date('Thu, 01 Jan 1970 00:00:00 GMT')
-                }))
+                deleteCookie(reply)
                 return { msg: 'Unauthorized' }
             }
         }
