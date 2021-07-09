@@ -1,5 +1,7 @@
 import axios from "axios"
+import { validate } from "uuid"
 import { GithubApiConfig } from "../../config"
+import { AuthenticationError } from "../token"
 import { GithubUser, GithubUserResponse } from "./types"
 
 export class GithubAuth {
@@ -42,18 +44,25 @@ export class GithubAuth {
     }
 
     public async getUserInfo(token: string): Promise<GithubUserResponse> {
-        const { data } = await axios.get(this.apiConfig.userUrl,
-            {
-                headers: {
-                    Accept: "application/vnd.github.v3+json",
-                    Authorization: `Bearer ${token}`
+        console.log({ token })
+        try {
+            const { data } = await axios.get(this.apiConfig.userUrl,
+                {
+                    headers: {
+                        Accept: "application/vnd.github.v3+json",
+                        Authorization: `Bearer ${token}`
+                    }
                 }
+            )
+            console.log({ data })
+            return {
+                email: data.email,
+                id: data.id,
+                info: data
             }
-        )
-        return {
-            email: data.email,
-            id: data.id,
-            info: data
+        } catch (err) {
+            console.log({ err })
+            throw new AuthenticationError()
         }
     }
 

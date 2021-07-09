@@ -51,8 +51,18 @@ server.get('/auth/', async () => {
 
 const TOKEN_NAME = 'punci_token'
 
-const deleteCookie = (reply: FastifyReply) => {
+const deleteToken = (reply: FastifyReply) => {
     reply.header('Set-Cookie', serialize(TOKEN_NAME, '', {
+        path: '/',
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        expires: new Date('Thu, 01 Jan 1970 00:00:00 GMT'),
+    }))
+}
+
+const saveToken = (reply: FastifyReply, token: string) => {
+    reply.header('Set-Cookie', serialize(TOKEN_NAME, token, {
         path: '/',
         httpOnly: true,
         secure: true,
@@ -80,6 +90,7 @@ server.route({
             console.log({userId})
             const sessionId = await sessions.createSessionId({ userId, githubToken })
             const token = tokens.createToken(sessionId)
+            saveToken(reply, token)
         } catch (err) {
             throw err
         } finally {
@@ -105,7 +116,7 @@ server.route({
             const sessionId = tokens.getSessionIdFromToken(token)
             sessions.delete(sessionId)
         }
-        deleteCookie(reply)
+        deleteToken(reply)
         reply.redirect('/')
     }
 })
@@ -126,9 +137,10 @@ server.route({
         } catch (err) {
             if (err.constructor.name === AuthenticationError.name) {
                 reply.status(401)
-                deleteCookie(reply)
+                deleteToken(reply)
                 return { msg: 'Unauthorized' }
             }
+            throw err
         }
     }
 })
