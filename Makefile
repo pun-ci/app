@@ -25,13 +25,15 @@ logs:
 	mkdir -p logs
 
 dev: logs node_modules
+	yarn run check-node-version
 	node_modules/.bin/concurrently \
-		-n reverse-proxy,db,frontend,auth \
-		-c bgYellow,bgBlue,bgCyan,bgMagenta \
+		-n reverse-proxy,db,frontend,auth,api \
+		-c bgYellow,bgBlue,bgCyan,bgMagenta,bgGreen \
 		"(cd dev/reverse-proxy ; make start) 2>&1 | tee -a logs/reverse-proxy.log" \
 		"make dev_db 2>&1 | tee -a logs/db.log" \
 		"(cd frontend ; make dev) 2>&1 | tee -a logs/frontend.log" \
-		"(cd auth ; make dev) 2>&1 | tee -a logs/auth.log"
+		"(cd auth ; make dev) 2>&1 | tee -a logs/auth.log" \
+		"(cd api ; make dev) 2>&1 | tee -a logs/api.log"
 
 dev_db:
 	docker run --rm \

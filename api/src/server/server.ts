@@ -15,7 +15,7 @@ assert(process.env.GITHUB_AUTH_URL?.match(/.+/))
 assert(process.env.GITHUB_AUTH_CLIENT_ID?.match(/.+/))
 assert(process.env.GITHUB_CLIENT_SECRET?.match(/.+/))
 assert(process.env.EVENTSTOREDB_URL?.match(/.+/))
-assert(process.env.AUTH_PORT?.match(/\d+/))
+assert(process.env.API_PORT?.match(/\d+/))
 assert(process.env.JWT_SECRET?.match(/.+/))
 
 const GITHUB_AUTH_URL = String(process.env.GITHUB_AUTH_URL)
@@ -23,7 +23,7 @@ const GITHUB_AUTH_CLIENT_ID = String(process.env.GITHUB_AUTH_CLIENT_ID)
 const GITHUB_CLIENT_SECRET = String(process.env.GITHUB_CLIENT_SECRET)
 const EVENTSTOREDB_URL = String(process.env.EVENTSTOREDB_URL)
 const JWT_SECRET = String(process.env.JWT_SECRET)
-const AUTH_PORT = Number.parseInt(process.env.AUTH_PORT ?? '')
+const API_PORT = Number.parseInt(process.env.API_PORT ?? '')
 
 
 const githubAuth = new GithubAuth(
@@ -121,7 +121,7 @@ server.route({
 
 server.route({
     method: 'GET',
-    url: '/api/v1/user/me',
+    url: '/api/v1/pina',
     handler: async (request, reply) => {
         try {
             const token = request.cookies.punci_token
@@ -145,8 +145,8 @@ server.route({
 
 export const startServer = async () => {
     try {
-        await server.listen(AUTH_PORT)
-        console.log(`Auth server started on port ${AUTH_PORT}`)
+        await server.listen(API_PORT)
+        console.log(`Auth server started on port ${API_PORT}`)
     } catch (err) {
         console.error(err)
         server.log.error(err)

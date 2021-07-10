@@ -5,6 +5,9 @@
     "contributors": [
         "Levente Löki <leventeloki@gmail.com>"
     ],
+    "scripts": {
+        "check-node-version": "node -v"
+    },
     "license": "MIT",
     "engines": {
         "node": "^16.4"
