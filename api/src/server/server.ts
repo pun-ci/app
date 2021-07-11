@@ -1,7 +1,7 @@
 import fastify, { FastifyReply, FastifyRequest } from 'fastify'
 import { strict as assert } from 'assert'
 import axios, { AxiosResponse } from 'axios'
-import { GithubAuth } from '../github'
+import { GithubAuth, GithubOrgs, GithubRepos } from '../github/github'
 import config from '../../config'
 import { createDb } from '../events'
 import { Users } from '../user'
@@ -10,6 +10,8 @@ import { AuthenticationError, Tokens } from '../token'
 import { serialize } from 'cookie'
 import fastifyCookie from 'fastify-cookie'
 import fastifyFormBody from 'fastify-formbody'
+import { GithubRepoOwner } from '../github/types'
+import {flatten} from 'lodash'
 
 assert(process.env.GITHUB_AUTH_URL?.match(/.+/))
 assert(process.env.GITHUB_AUTH_CLIENT_ID?.match(/.+/))
@@ -26,11 +28,9 @@ const JWT_SECRET = String(process.env.JWT_SECRET)
 const API_PORT = Number.parseInt(process.env.API_PORT ?? '')
 
 
-const githubAuth = new GithubAuth(
-    config.githubApi,
-    GITHUB_AUTH_CLIENT_ID,
-    GITHUB_CLIENT_SECRET
-)
+const githubRepos = new GithubRepos()
+const githubAuth = new GithubAuth(GITHUB_AUTH_CLIENT_ID, GITHUB_CLIENT_SECRET)
+const githubOrgs = new GithubOrgs()
 
 const eventstore = createDb(EVENTSTOREDB_URL)
 
@@ -43,7 +43,7 @@ const server = fastify({ logger: true })
 server.register(fastifyCookie)
 server.register(fastifyFormBody)
 
-server.get('/auth/', async () => {
+server.get('/api/', async () => {
     return {
         status: 'OK'
     }
@@ -52,6 +52,7 @@ server.get('/auth/', async () => {
 const TOKEN_NAME = 'punci_token'
 
 const deleteToken = (reply: FastifyReply) => {
+    return
     reply.header('Set-Cookie', serialize(TOKEN_NAME, '', {
         path: '/',
         httpOnly: true,
@@ -61,67 +62,9 @@ const deleteToken = (reply: FastifyReply) => {
     }))
 }
 
-const saveToken = (reply: FastifyReply, token: string) => {
-    reply.header('Set-Cookie', serialize(TOKEN_NAME, token, {
-        path: '/',
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-    }))
-}
-
 server.route({
     method: 'GET',
-    url: '/auth/github/callback',
-    schema: {
-        querystring: {
-            code: {
-                type: 'string'
-            }
-        }
-    },
-    handler: async (request, reply) => {
-        try {
-            const { code } = request.query as { code: string }
-            const githubToken = await githubAuth.getToken(code)
-            const githubUser = await githubAuth.getUser(githubToken)
-            const userId = await users.getUserIdByGithubUserId(githubUser.id)
-            const sessionId = await sessions.createSessionId({ userId, githubToken })
-            const token = tokens.createToken(sessionId)
-            saveToken(reply, token)
-        } catch (err) {
-            throw err
-        } finally {
-            reply.redirect('/')
-        }
-    }
-})
-
-server.route({
-    method: 'GET',
-    url: '/auth/github',
-    handler: async (request, reply) => {
-        reply.redirect(GITHUB_AUTH_URL)
-    }
-})
-
-server.route({
-    method: 'POST',
-    url: '/auth/logout',
-    handler: async (request, reply) => {
-        const token = request.cookies.punci_token
-        if (token) {
-            const sessionId = tokens.getSessionIdFromToken(token)
-            sessions.delete(sessionId)
-        }
-        deleteToken(reply)
-        reply.redirect('/')
-    }
-})
-
-server.route({
-    method: 'GET',
-    url: '/api/v1/pina',
+    url: '/api/v1/repo',
     handler: async (request, reply) => {
         try {
             const token = request.cookies.punci_token
@@ -131,7 +74,50 @@ server.route({
             const sessionId = tokens.getSessionIdFromToken(token)
             const githubToken = await sessions.getGithubToken(sessionId)
             const user = await githubAuth.getUserInfo(githubToken)
-            return { user }
+            const orgs = await githubOrgs.getOrgs(user.info.login, githubToken)
+            let owners: GithubRepoOwner[] = [
+                {
+                    name: user.info.login,
+                    type: 'user',
+                }
+            ]
+            orgs.forEach(org => {
+                owners = owners.concat([{
+                    name: org.name,
+                    type: 'org',
+                }])
+            })
+            const repos = await Promise.all(owners.map(async owner => {
+                return await githubRepos.getRepos(owner, githubToken)
+            }))
+            return {repos}
+        } catch (err) {
+            console.log({ERR: err})
+            if (err.constructor.name === AuthenticationError.name) {
+                console.trace()
+                reply.status(401)
+                deleteToken(reply)
+                return { msg: 'Unauthorized' }
+            }
+            throw err
+        }
+    }
+})
+
+server.route({
+    method: 'GET',
+    url: '/api/v1/github-org',
+    handler: async (request, reply) => {
+        try {
+            const token = request.cookies.punci_token
+            if (!token) {
+                throw new AuthenticationError()
+            }
+            const sessionId = tokens.getSessionIdFromToken(token)
+            const githubToken = await sessions.getGithubToken(sessionId)
+            const user = await githubAuth.getUserInfo(githubToken)
+            const orgs = await githubOrgs.getOrgs(user.info.login, githubToken)
+            return {orgs}
         } catch (err) {
             if (err.constructor.name === AuthenticationError.name) {
                 reply.status(401)
@@ -146,10 +132,18 @@ server.route({
 export const startServer = async () => {
     try {
         await server.listen(API_PORT)
-        console.log(`Auth server started on port ${API_PORT}`)
+        console.log(`API server started on port ${API_PORT}`)
     } catch (err) {
         console.error(err)
         server.log.error(err)
         process.exit(-1)
     }
 }
+
+// const token = request.cookies.punci_token
+// if (!token) {
+//     throw new AuthenticationError()
+// }
+// const sessionId = tokens.getSessionIdFromToken(token)
+// const githubToken = await sessions.getGithubToken(sessionId)
+// const user = await githubAuth.getUserInfo(githubToken)

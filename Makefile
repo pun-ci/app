@@ -30,7 +30,7 @@ dev: logs node_modules
 		-n reverse-proxy,db,frontend,auth,api \
 		-c bgYellow,bgBlue,bgCyan,bgMagenta,bgGreen \
 		"(cd dev/reverse-proxy ; make start) 2>&1 | tee -a logs/reverse-proxy.log" \
-		"make dev_db 2>&1 | tee -a logs/db.log" \
+		"make dev_db 2>&1 > logs/db.log" \
 		"(cd frontend ; make dev) 2>&1 | tee -a logs/frontend.log" \
 		"(cd auth ; make dev) 2>&1 | tee -a logs/auth.log" \
 		"(cd api ; make dev) 2>&1 | tee -a logs/api.log"
