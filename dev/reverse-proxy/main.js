@@ -20,7 +20,7 @@ assert(AUTH_PORT > 0)
 const WAIT_FOR = [
     { name: 'Frontend', url: `http://localhost:${FRONTEND_PORT}` },
     { name: 'Auth service', url: `http://localhost:${AUTH_PORT}/auth/` },
-    { name: 'Auth service', url: `http://localhost:${API_PORT}/auth/` },
+    { name: 'API service', url: `http://localhost:${API_PORT}/api/` },
 ]
 
 const server = express()
