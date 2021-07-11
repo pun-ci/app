@@ -86,9 +86,9 @@ server.route({
                     type: 'org',
                 }])
             })
-            const repos = await Promise.all(owners.map(async owner => {
+            const repos = flatten(await Promise.all(owners.map(async owner => {
                 return await githubRepos.getRepos(owner, githubToken)
-            }))
+            })))
             return {repos}
         } catch (err) {
             console.log({ERR: err})
