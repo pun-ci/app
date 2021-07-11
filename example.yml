@@ -1,0 +1,8 @@
+jobs:
+  job1:
+    image: alpine:latest
+    commands:
+      - name: Touch
+        cmd: touch pina
+      - name: List
+        cmd: ls -la

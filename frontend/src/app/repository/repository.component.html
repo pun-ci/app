@@ -1,0 +1,13 @@
+<p>repository works!</p>
+<div>
+  Repositories by owner
+  <div *ngFor="let repoByOwner of repositoriesList ">
+    <div>
+      <span>Owner: {{repoByOwner.owner.name}}</span>
+    </div>
+    <div *ngFor="let repo of repoByOwner.repos ">
+      <div> {{repo.name}}</div>
+      <div> {{repo.id}}</div>
+    </div>
+  </div>
+</div>

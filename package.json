@@ -1,0 +1,20 @@
+{
+    "name": "app.punci.io",
+    "repository": "https://github.com/pun-ci/app.git",
+    "author": "Levente Löki <leventeloki@gmail.com>",
+    "contributors": [
+        "Levente Löki <leventeloki@gmail.com>"
+    ],
+    "scripts": {
+        "check-node-version": "node -v"
+    },
+    "license": "MIT",
+    "engines": {
+        "node": "^16.4"
+    },
+    "devDependencies": {
+        "chalk": "^4.1.1",
+        "concurrently": "^6.2.0"
+    },
+    "dependencies": {}
+}
