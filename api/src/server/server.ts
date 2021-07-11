@@ -52,7 +52,6 @@ server.get('/api/', async () => {
 const TOKEN_NAME = 'punci_token'
 
 const deleteToken = (reply: FastifyReply) => {
-    return
     reply.header('Set-Cookie', serialize(TOKEN_NAME, '', {
         path: '/',
         httpOnly: true,
