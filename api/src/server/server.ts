@@ -128,6 +128,7 @@ server.route({
             const userId = await sessions.getUserId(sessionId)
             const githubRepoId: number = (request.body as any).githubRepoId
             await repos.addRepo(userId, githubRepoId)
+            // create job
             return {userId}
         } catch (err) {
             if (err.constructor.name === AuthenticationError.name) {
@@ -163,6 +164,14 @@ server.route({
             }
             throw err
         }
+    }
+})
+
+server.route({
+    method: 'GET',
+    url: '/api/v1/dummy',
+    handler: async (request, reply) => {
+
     }
 })
 

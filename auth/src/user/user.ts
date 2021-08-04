@@ -1,8 +1,7 @@
-import { jsonEvent, JSONEventType } from "@eventstore/db-client";
-import { EventStoreDb } from "../events";
 import { v4 as uuid } from 'uuid'
+import { EventStore, Event } from "@pun-ci/eventstore";
 
-type UserCreated = JSONEventType<
+type UserCreated = Event<
     'UserCreated',
     {
         id: string,
@@ -13,23 +12,27 @@ type UserCreated = JSONEventType<
 export class Users {
 
     constructor(
-        private eventstore: EventStoreDb
+        private eventstore: EventStore
     ) { }
 
     public async getUserIdByGithubUserId(githubUserId: number): Promise<string> {
         const streamId = `user-gh:${githubUserId}`;
-        const events = await this.eventstore.getAllEvents<UserCreated>(streamId)
-        if (events.length > 0) {
-            return events[0].data.id
+        const stream = this.eventstore.stream<UserCreated>(streamId)
+        const userId = await stream.reduce<string | null>(null, {
+            UserCreated: ({ id }) => id
+        })
+        if (userId !== null) {
+            return userId
         }
+
         const id = uuid()
-        await this.eventstore.addEvent(streamId, jsonEvent<UserCreated>({
+        stream.addEvent({
             type: 'UserCreated',
             data: {
                 githubUserId,
                 id
             }
-        }))
+        })
         return id
     }
 

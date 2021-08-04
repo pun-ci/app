@@ -302,7 +302,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@eventstore/db-client@^1.2.2":
+"@eventstore/db-client@^1.2.1":
   version "1.2.2"
   resolved "https://registry.yarnpkg.com/@eventstore/db-client/-/db-client-1.2.2.tgz#bf55c7be0753f88236a2bb6c3faab763a29c79ab"
   integrity sha512-x4xspnWZPJufvCdleHNsmLkhd6GV8HPHy/yFyfeoVFenoL8ReGlpe26p63n+mUx57GnEzoFQb6kbTjUm2xuPAA==
@@ -607,6 +607,13 @@
   integrity sha512-SXsM27SGH3yTWKc2fKR4SYNxsmnvuBQ9dd6QHtEWmiZ/VqaOYPAIlS8+vMcn27YLtAEBGvNRSh3TPNvtjZgfqA==
   dependencies:
     debug "^4.3.1"
+
+"@pun-ci/eventstore@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@pun-ci/eventstore/-/eventstore-0.1.2.tgz#8347f61849c486fdeeb7d4930e3e0696dc2e2d95"
+  integrity sha512-DdXNcP8iL/i9eGcWW7BYe971r24dQ7XJBFGKCigWArfEScEEihBXiUlaui2igkypbMiIsZCnCKz32Y/z7J4jHw==
+  dependencies:
+    "@eventstore/db-client" "^1.2.1"
 
 "@sindresorhus/is@^0.14.0":
   version "0.14.0"

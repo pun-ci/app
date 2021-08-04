@@ -27,10 +27,9 @@ logs:
 dev: logs node_modules
 	yarn run check-node-version
 	node_modules/.bin/concurrently \
-		-n reverse-proxy,db,frontend,auth,api \
-		-c bgYellow,bgBlue,bgCyan,bgMagenta,bgGreen \
+		-n reverse-proxy,frontend,auth,api \
+		-c bgYellow,bgCyan,bgMagenta,bgGreen \
 		"(cd dev/reverse-proxy ; make start) 2>&1 | tee -a logs/reverse-proxy.log" \
-		"make dev_db 2>&1 > logs/db.log" \
 		"(cd frontend ; make dev) 2>&1 | tee -a logs/frontend.log" \
 		"(cd auth ; make dev) 2>&1 | tee -a logs/auth.log" \
 		"(cd api ; make dev) 2>&1 | tee -a logs/api.log"
@@ -50,6 +49,21 @@ dev_db:
 		-e EVENTSTORE_ENABLE_EXTERNAL_TCP=true \
 		-e EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true \
 		eventstore/eventstore:21.2.0-buster-slim
+
+dev_rabbit:
+	docker run --rm \
+		-p 15672:15672 \
+		-p 5672:5672 \
+		-e RABBITMQ_DEFAULT_USER=rabbitmq \
+		-e RABBITMQ_DEFAULT_PASS=rabbitmq \
+		rabbitmq:3-management
+
+dev_services:
+	node_modules/.bin/concurrently \
+		-n db,rabbit \
+		-c bgBlue,bgMagenta \
+		"make dev_db 2>&1 | tee -a logs/db.log" \
+		"make dev_rabbit 2>&1 | tee -a logs/rabbit.log"
 
 sh:
 	sh
