@@ -1,0 +1,5 @@
+api/node_modules
+auth/node_modules
+frontend
+dist
+logs

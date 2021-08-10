@@ -67,3 +67,9 @@ dev_services:
 
 sh:
 	sh
+
+lint: node_modules
+	node_modules/.bin/eslint .
+
+lint_fix: node_modules
+	node_modules/.bin/eslint . --fix
